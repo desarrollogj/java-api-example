@@ -33,7 +33,7 @@ public class UserServiceTest {
 
     @Test
     void whenGetAll_AndActiveUsersExist_ThenReturnAListOfUsers() {
-        var userList = easyRandom.objects(User.class, 5).collect(Collectors.toList());
+        var userList = easyRandom.objects(User.class, 5).toList();
 
         when(repository.findAllActive()).thenReturn(userList);
 
