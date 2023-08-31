@@ -78,14 +78,14 @@ Create the package using the following command. The jar file will be created int
 
 Build the image
 
-`docker build FULL_PATH_TO_PROJECT_DOCKERFILE -t IMAGE_NAME --build-arg ARTIFACT=exampleapi --build-arg VERSION=0.0.1-SNAPSHOT --build-arg ENVIRONMENT=develop`
+`docker build . -t IMAGE_NAME --build-arg ARTIFACT=exampleapi --build-arg VERSION=0.0.1-SNAPSHOT --build-arg ENVIRONMENT=develop`
 
 You can change the environment values according the project, the version you want to deploy, and the project environment.
 
-- IMAGE_NAME: The project name (Ex: mc_template_ms)
+- IMAGE_NAME: The project name (Ex: exampleapi)
 - ARTIFACT and VERSION: Created jar artifact name and artifact version
 - ENVIRONMENT: The environment to execute (affects configurations)
-- PORT: Application port. Ask the DevOps for available ports. Each service has it's own port
+- PORT: Application port
 
 Run the image:
 
