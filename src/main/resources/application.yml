@@ -1,0 +1,33 @@
+info:
+  app:
+    encoding: '@project.build.sourceEncoding@'
+    java:
+      source: '@java.version@'
+      target: '@java.version@'
+app:
+  version: '@project.version@'
+  name: '@project.name@'
+
+spring:
+  application:
+    name: '@project.name@'
+  main:
+    banner-mode: 'OFF'
+  jackson:
+    property-naming-strategy: 'LOWER_CAMEL_CASE'
+
+server:
+  port: 9090
+  compression:
+    enabled: true
+
+user:
+  timezone: 'UTC'
+
+logging:
+  config: classpath:log4j2.xml
+
+springdoc:
+  version: '@springdoc.version@'
+  swagger-ui:
+    use-root-path: true
