@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +29,7 @@ public class ControllerErrorAdvice {
     }
 
     @ExceptionHandler({WebExchangeBindException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public final ResponseEntity<ErrorResponse> handleWebExchangeBindExceptions(
             WebExchangeBindException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -39,6 +41,7 @@ public class ControllerErrorAdvice {
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public final ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex) {
         var validationList = ex.getBindingResult().getFieldErrors().stream()
@@ -57,6 +60,7 @@ public class ControllerErrorAdvice {
     }
 
     @ExceptionHandler({RuntimeException.class})
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public final ResponseEntity<ErrorResponse> handleAllExceptions(RuntimeException ex) {
         log.error(ex.getMessage(), ex);
         return error(HttpStatus.INTERNAL_SERVER_ERROR, ex);

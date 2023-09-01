@@ -7,6 +7,7 @@ An Api using Java 17, Spring and the following packages:
 - Log4j2
 - Lombok
 - Modelmapper
+- Springdoc (Open Api / Swagger implementation)
 - Junit 5 tests and Jacoco plugin for coverage
 
 ### Endpoints
@@ -55,6 +56,12 @@ DELETE: `http://localhost:9090/api/v1/users/{id}`
 Deletes an existent user by it's id. The deletion is logical, so the user registry is preserved in the persistence, but it will be unavailable in the find endpoints. Later you can reactivate the user with the PUT endpoint.
 
 Returns 200 with the deleted user if it was successful.
+
+### Documentation
+
+You can access to the swagger documentation visiting:
+
+`http://localhost:9090`
 
 ### Compile and run
 
