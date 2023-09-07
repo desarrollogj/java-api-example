@@ -18,9 +18,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,27 +42,32 @@ public class UserControllerTest {
 
   @Test
   void whenGetAll_AndActiveUsersExist_ThenReturnAListOfUsers() {
-    var users = easyRandom.objects(User.class, 5).toList();
-    var usersResponse = easyRandom.objects(UserResponse.class, 5).toList();
+    var user = easyRandom.nextObject(User.class);
+    var users = List.of(user);
+    var userResponse = easyRandom.nextObject(UserResponse.class);
+    var usersResponse = List.of(userResponse);
 
-    when(service.getAll()).thenReturn(users);
-    when(mapper.convertToResponseListFromDomainList(users)).thenReturn(usersResponse);
+    when(service.getAll()).thenReturn(Flux.fromIterable(users));
+    when(mapper.convertToResponseFromDomain(user)).thenReturn(userResponse);
 
     var response = controller.getAll();
+    var resultResponse = response.collectList().block();
 
-    assertNotNull(response);
-    assertEquals(response, usersResponse);
+    assertNotNull(resultResponse);
+    assertEquals(usersResponse, resultResponse);
   }
 
   @Test
   void whenGetAll_AndActiveUsersDoNotExist_ThenReturnAnEmptyListOfUsers() {
-    when(service.getAll()).thenReturn(Collections.emptyList());
-    when(mapper.convertToResponseListFromDomainList(anyList())).thenReturn(Collections.emptyList());
+    when(service.getAll()).thenReturn(Flux.empty());
 
     var response = controller.getAll();
+    var resultResponse = response.collectList().block();
 
-    assertNotNull(response);
-    assertEquals(0, response.size());
+    assertNotNull(resultResponse);
+    assertEquals(0, resultResponse.size());
+
+    verifyNoInteractions(mapper);
   }
 
   @Test
@@ -68,22 +76,23 @@ public class UserControllerTest {
     var user = easyRandom.nextObject(User.class);
     var userResponse = easyRandom.nextObject(UserResponse.class);
 
-    when(service.getById(userId)).thenReturn(Optional.of(user));
+    when(service.getById(userId)).thenReturn(Mono.just(user));
     when(mapper.convertToResponseFromDomain(user)).thenReturn(userResponse);
 
     var response = controller.getById(userId);
+    var resultResponse = response.block();
 
-    assertNotNull(response);
-    assertEquals(response, userResponse);
+    assertNotNull(resultResponse);
+    assertEquals(userResponse, resultResponse);
   }
 
   @Test
   void whenGetById_AndDoesNotExist_ThenThrowNotFoundException() {
     var userId = easyRandom.nextLong();
 
-    when(service.getById(userId)).thenReturn(Optional.empty());
+    when(service.getById(userId)).thenReturn(Mono.empty());
 
-    assertThrows(NotFoundException.class, () -> controller.getById(userId));
+    assertThrows(NotFoundException.class, () -> controller.getById(userId).block());
 
     verifyNoInteractions(mapper);
   }
@@ -94,22 +103,23 @@ public class UserControllerTest {
     var user = easyRandom.nextObject(User.class);
     var userResponse = easyRandom.nextObject(UserResponse.class);
 
-    when(service.getByReference(userReference)).thenReturn(Optional.of(user));
+    when(service.getByReference(userReference)).thenReturn(Mono.just(user));
     when(mapper.convertToResponseFromDomain(user)).thenReturn(userResponse);
 
     var response = controller.getByReference(userReference);
+    var resultResponse = response.block();
 
-    assertNotNull(response);
-    assertEquals(response, userResponse);
+    assertNotNull(resultResponse);
+    assertEquals(userResponse, resultResponse);
   }
 
   @Test
   void whenGetByReference_AndDoesNotExist_ThenThrowNotFoundException() {
     var userReference = easyRandom.toString();
 
-    when(service.getByReference(userReference)).thenReturn(Optional.empty());
+    when(service.getByReference(userReference)).thenReturn(Mono.empty());
 
-    var ex = assertThrows(NotFoundException.class, () -> controller.getByReference(userReference));
+    var ex = assertThrows(NotFoundException.class, () -> controller.getByReference(userReference).block());
 
     assertEquals(ex.getCode(), ErrorCode.USER_BY_REFERENCE_NOT_FOUND.getCode());
 
@@ -124,13 +134,14 @@ public class UserControllerTest {
     var response = easyRandom.nextObject(UserResponse.class);
 
     when(mapper.convertToInputFromSaveRequest(request)).thenReturn(input);
-    when(service.save(input)).thenReturn(created);
+    when(service.save(input)).thenReturn(Mono.just(created));
     when(mapper.convertToResponseFromDomain(created)).thenReturn(response);
 
     var user = controller.save(request);
+    var resultUser = user.block();
 
-    assertNotNull(user);
-    assertEquals(user, response);
+    assertNotNull(resultUser);
+    assertEquals(response, resultUser);
   }
 
   @Test
@@ -143,13 +154,14 @@ public class UserControllerTest {
     var response = easyRandom.nextObject(UserResponse.class);
 
     when(mapper.convertToInputFromUpdateRequest(userId, request)).thenReturn(input);
-    when(service.update(input)).thenReturn(Optional.of(updated));
+    when(service.update(input)).thenReturn(Mono.just(updated));
     when(mapper.convertToResponseFromDomain(updated)).thenReturn(response);
 
     var user = controller.update(userId, request);
+    var resultUser = user.block();
 
-    assertNotNull(user);
-    assertEquals(user, response);
+    assertNotNull(resultUser);
+    assertEquals(response, resultUser);
   }
 
   @Test
@@ -160,33 +172,34 @@ public class UserControllerTest {
     input.setId(userId);
 
     when(mapper.convertToInputFromUpdateRequest(userId, request)).thenReturn(input);
-    when(service.update(input)).thenReturn(Optional.empty());
+    when(service.update(input)).thenReturn(Mono.empty());
 
-    assertThrows(NotFoundException.class, () -> controller.update(userId, request));
+    assertThrows(NotFoundException.class, () -> controller.update(userId, request).block());
   }
 
   @Test
   void whenDelete_AndItsSuccessful_ThenReturnDeletedUser() {
     var userId = easyRandom.nextLong();
     var user = easyRandom.nextObject(User.class);
-    var userDto = easyRandom.nextObject(UserResponse.class);
+    var userResponse = easyRandom.nextObject(UserResponse.class);
 
-    when(service.delete(userId)).thenReturn(Optional.of(user));
-    when(mapper.convertToResponseFromDomain(user)).thenReturn(userDto);
+    when(service.delete(userId)).thenReturn(Mono.just(user));
+    when(mapper.convertToResponseFromDomain(user)).thenReturn(userResponse);
 
     var response = controller.delete(userId);
+    var responseUser = response.block();
 
-    assertNotNull(response);
-    assertEquals(response, userDto);
+    assertNotNull(responseUser);
+    assertEquals(userResponse, responseUser);
   }
 
   @Test
   void whenDelete_AndUserDoesNotExist_ThenReturnHttpStatusBadRequest() {
     var userId = easyRandom.nextLong();
 
-    when(service.delete(userId)).thenReturn(Optional.empty());
+    when(service.delete(userId)).thenReturn(Mono.empty());
 
-    assertThrows(BadRequestException.class, () -> controller.delete(userId));
+    assertThrows(BadRequestException.class, () -> controller.delete(userId).block());
 
     verifyNoInteractions(mapper);
   }

@@ -11,11 +11,11 @@ CREATE MEMORY TABLE temp_users (
 
 INSERT INTO temp_users (reference, first_name, last_name, email, is_active, created, updated, version)
 VALUES
-('17334fcc-8b65-11ed-a1eb-0242ac120002', 'Gustavo', 'Ceratti', 'gceratti@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
-('17335260-8b65-11ed-a1eb-0242ac120002', 'Fabiana', 'Cantilo', 'fcantilo@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
-('17335396-8b65-11ed-a1eb-0242ac120002', 'Luca', 'Prodan', 'lprodan@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
-('173354c2-8b65-11ed-a1eb-0242ac120002', 'Miguel', 'Mateos', 'mmateos@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
-('173355da-8b65-11ed-a1eb-0242ac120002', 'Ricardo', 'Mollo', 'rmollo@foobar.com.ar', false, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0);
+('17334fcc-8b65-11ed-a1eb-0242ac120002', 'Gustavo', 'Ceratti', 'gceratti_flux@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
+('17335260-8b65-11ed-a1eb-0242ac120002', 'Fabiana', 'Cantilo', 'fcantilo_flux@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
+('17335396-8b65-11ed-a1eb-0242ac120002', 'Luca', 'Prodan', 'lprodan_flux@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
+('173354c2-8b65-11ed-a1eb-0242ac120002', 'Miguel', 'Mateos', 'mmateos_flux@foobar.com.ar', true, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0),
+('173355da-8b65-11ed-a1eb-0242ac120002', 'Ricardo', 'Mollo', 'rmollo_flux@foobar.com.ar', false, '2023-09-04 10:04:00', '2023-09-04 10:04:00', 0);
 
 MERGE INTO users AS u USING temp_users AS t ON u.reference = t.reference
 WHEN NOT MATCHED THEN

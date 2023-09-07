@@ -1,12 +1,14 @@
 package com.desarrollogj.exampleapi.api.domain.user;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.ZonedDateTime;
 
@@ -14,36 +16,34 @@ import java.time.ZonedDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Table(name = "users")
 public class User {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "id")
+  @Column(value = "id")
   private Long id;
 
-  @Column(name = "reference")
+  @Column(value = "reference")
   private String reference;
 
-  @Column(name = "first_name")
+  @Column(value = "first_name")
   private String firstName;
 
-  @Column(name = "last_name")
+  @Column(value = "last_name")
   private String lastName;
 
-  @Column(name = "email")
+  @Column(value = "email")
   private String email;
 
-  @Column(name = "is_active")
+  @Column(value = "is_active")
   private Boolean active;
 
   @CreatedDate
-  @Column(name = "created")
+  @Column(value = "created")
   private ZonedDateTime created;
 
   @LastModifiedDate
-  @Column(name = "updated")
+  @Column(value = "updated")
   private ZonedDateTime updated;
 
-  @Version private Integer version;
+  private Integer version;
 }

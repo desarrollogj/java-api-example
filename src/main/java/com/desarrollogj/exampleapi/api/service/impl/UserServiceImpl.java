@@ -14,73 +14,68 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-  private final UserRepository repository;
+    private final UserRepository repository;
 
-  @Override
-  public List<User> getAll() {
-    var list = new ArrayList<User>();
-    repository.findAllActive().forEach(list::add);
-    return list;
-  }
-
-  @Override
-  public Optional<User> getById(long id) {
-    return repository.findActiveById(id);
-  }
-
-  @Override
-  public Optional<User> getByReference(String reference) {
-    return repository.findActiveByReference(reference);
-  }
-
-  @Override
-  public User save(UserSaveInput input) {
-    var now = ZonedDateTime.now();
-    var user =
-        User.builder()
-            .reference(UUID.randomUUID().toString())
-            .firstName(input.getFirstName())
-            .lastName(input.getLastName())
-            .email(input.getEmail())
-            .active(true)
-            .created(now)
-            .updated(now)
-            .build();
-    return repository.save(user);
-  }
-
-  @Override
-  public Optional<User> update(UserUpdateInput input) {
-    var currentUser = repository.findById(input.getId());
-    if (currentUser.isEmpty()) {
-      return currentUser;
+    @Override
+    public Flux<User> getAll() {
+        return repository.findAllActive();
     }
 
-    var userToUpdate = currentUser.get();
-    userToUpdate.setFirstName(input.getFirstName());
-    userToUpdate.setLastName(input.getLastName());
-    userToUpdate.setEmail(input.getEmail());
-    userToUpdate.setActive(true);
-    userToUpdate.setUpdated(ZonedDateTime.now());
-
-    return Optional.of(repository.save(userToUpdate));
-  }
-
-  @Override
-  public Optional<User> delete(long id) {
-    var currentUser = repository.findById(id);
-    if (currentUser.isEmpty()) {
-      return currentUser;
+    @Override
+    public Mono<User> getById(long id) {
+        return repository.findActiveById(id);
     }
 
-    var userToDelete = currentUser.get();
-    userToDelete.setActive(false);
-    userToDelete.setUpdated(ZonedDateTime.now());
+    @Override
+    public Mono<User> getByReference(String reference) {
+        return repository.findActiveByReference(reference);
+    }
 
-    return Optional.of(repository.save(userToDelete));
-  }
+    @Override
+    public Mono<User> save(UserSaveInput input) {
+        var now = ZonedDateTime.now();
+        return Mono.just(User.builder()
+                        .reference(UUID.randomUUID().toString())
+                        .firstName(input.getFirstName())
+                        .lastName(input.getLastName())
+                        .email(input.getEmail())
+                        .active(true)
+                        .created(now)
+                        .updated(now)
+                        .build())
+                .flatMap(repository::save);
+    }
+
+    @Override
+    public Mono<User> update(UserUpdateInput input) {
+        return repository.findById(input.getId())
+                .map(userToUpdate -> {
+                    userToUpdate.setFirstName(input.getFirstName());
+                    userToUpdate.setLastName(input.getLastName());
+                    userToUpdate.setEmail(input.getEmail());
+                    userToUpdate.setActive(true);
+                    userToUpdate.setUpdated(ZonedDateTime.now());
+                    return userToUpdate;
+                })
+                .flatMap(repository::save)
+                .switchIfEmpty(Mono.empty());
+    }
+
+    @Override
+    public Mono<User> delete(long id) {
+        return repository.findById(id)
+                .map(userToDelete -> {
+                    userToDelete.setActive(false);
+                    userToDelete.setUpdated(ZonedDateTime.now());
+                    return userToDelete;
+                })
+                .flatMap(repository::save)
+                .switchIfEmpty(Mono.empty());
+    }
 }

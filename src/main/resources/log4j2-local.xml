@@ -15,6 +15,9 @@
                 additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
+        <Logger name="org.springframework.data.r2dbc" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
         <Root level="error">
             <AppenderRef ref="Console"/>
         </Root>

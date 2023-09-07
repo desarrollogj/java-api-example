@@ -1,8 +1,8 @@
-# Java Example Api
+# Java reactive Example Api
 
 An Api using Java 17, Spring and the following packages:
 
-- Spring Boot starter web (Version 3.1.3)
+- Spring Boot Webflux (Version 3.1.3)
 - In-memory database (h2)
 - Log4j2
 - Lombok

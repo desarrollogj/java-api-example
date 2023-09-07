@@ -19,6 +19,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -39,8 +41,8 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "List of active users")
     })
     @GetMapping
-    public List<UserResponse> getAll() {
-        return mapper.convertToResponseListFromDomainList(service.getAll());
+    public Flux<UserResponse> getAll() {
+        return service.getAll().map(mapper::convertToResponseFromDomain);
     }
 
     /**
@@ -55,16 +57,12 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found", content = {@Content(schema = @Schema(implementation = ErrorResponse.class))})
     })
     @GetMapping(value = "/{id}")
-    public UserResponse getById(@Parameter(description = "User id") @PathVariable(value = "id") long id) {
-        var user =
-                service
-                        .getById(id)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                ErrorCode.USER_NOT_FOUND.getCode(),
-                                                ErrorCode.USER_NOT_FOUND.getDescription(id)));
-        return mapper.convertToResponseFromDomain(user);
+    public Mono<UserResponse> getById(@Parameter(description = "User id") @PathVariable(value = "id") long id) {
+        return service.getById(id)
+                .map(mapper::convertToResponseFromDomain)
+                .switchIfEmpty(Mono.error(new NotFoundException(
+                        ErrorCode.USER_NOT_FOUND.getCode(),
+                        ErrorCode.USER_NOT_FOUND.getDescription(id))));
     }
 
     /**
@@ -79,16 +77,12 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found", content = {@Content(schema = @Schema(implementation = ErrorResponse.class))})
     })
     @GetMapping(value = "/references/{reference}")
-    public UserResponse getByReference(@Parameter(description = "User reference") @PathVariable(value = "reference") String reference) {
-        var user =
-                service
-                        .getByReference(reference)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                ErrorCode.USER_BY_REFERENCE_NOT_FOUND.getCode(),
-                                                ErrorCode.USER_BY_REFERENCE_NOT_FOUND.getDescription(reference)));
-        return mapper.convertToResponseFromDomain(user);
+    public Mono<UserResponse> getByReference(@Parameter(description = "User reference") @PathVariable(value = "reference") String reference) {
+        return service.getByReference(reference)
+                .map(mapper::convertToResponseFromDomain)
+                .switchIfEmpty(Mono.error(new NotFoundException(
+                        ErrorCode.USER_BY_REFERENCE_NOT_FOUND.getCode(),
+                        ErrorCode.USER_BY_REFERENCE_NOT_FOUND.getDescription(reference))));
     }
 
     /**
@@ -104,10 +98,9 @@ public class UserController {
     })
     @PostMapping()
     @ResponseStatus(value = HttpStatus.CREATED)
-    public UserResponse save(@Parameter(description = "User data") @Valid @RequestBody UserSaveRequest user) {
-        var userToCreate = mapper.convertToInputFromSaveRequest(user);
-        var createdUser = service.save(userToCreate);
-        return mapper.convertToResponseFromDomain(createdUser);
+    public Mono<UserResponse> save(@Parameter(description = "User data") @Valid @RequestBody UserSaveRequest user) {
+        return service.save(mapper.convertToInputFromSaveRequest(user))
+                .map(mapper::convertToResponseFromDomain);
     }
 
     /**
@@ -123,18 +116,12 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found", content = {@Content(schema = @Schema(implementation = ErrorResponse.class))})
     })
     @PutMapping(value = "/{id}")
-    public UserResponse update(@Parameter(description = "User id") @PathVariable(value = "id") long id, @Parameter(description = "User data") @Valid @RequestBody UserUpdateRequest user) {
-        var userToUpdate = mapper.convertToInputFromUpdateRequest(id, user);
-        var updatedUser =
-                service
-                        .update(userToUpdate)
-                        .orElseThrow(
-                                () ->
-                                        new NotFoundException(
-                                                ErrorCode.USER_NOT_FOUND.getCode(),
-                                                ErrorCode.USER_NOT_FOUND.getDescription(id)));
-
-        return mapper.convertToResponseFromDomain(updatedUser);
+    public Mono<UserResponse> update(@Parameter(description = "User id") @PathVariable(value = "id") long id, @Parameter(description = "User data") @Valid @RequestBody UserUpdateRequest user) {
+        return service.update(mapper.convertToInputFromUpdateRequest(id, user))
+                .map(mapper::convertToResponseFromDomain)
+                .switchIfEmpty(Mono.error(new NotFoundException(
+                        ErrorCode.USER_NOT_FOUND.getCode(),
+                        ErrorCode.USER_NOT_FOUND.getDescription(id))));
     }
 
     /**
@@ -149,15 +136,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "User not found", content = {@Content(schema = @Schema(implementation = ErrorResponse.class))})
     })
     @DeleteMapping(value = "/{id}")
-    public UserResponse delete(@Parameter(description = "User id") @PathVariable(value = "id") long id) {
-        var deletedUser =
-                service
-                        .delete(id)
-                        .orElseThrow(
-                                () ->
-                                        new BadRequestException(
-                                                ErrorCode.USER_COULD_NOT_BE_DELETED.getCode(),
-                                                ErrorCode.USER_COULD_NOT_BE_DELETED.getDescription(id)));
-        return mapper.convertToResponseFromDomain(deletedUser);
+    public Mono<UserResponse> delete(@Parameter(description = "User id") @PathVariable(value = "id") long id) {
+        return service.delete(id)
+                .map(mapper::convertToResponseFromDomain)
+                .switchIfEmpty(Mono.error(new BadRequestException(
+                        ErrorCode.USER_COULD_NOT_BE_DELETED.getCode(),
+                        ErrorCode.USER_COULD_NOT_BE_DELETED.getDescription(id))));
     }
 }
