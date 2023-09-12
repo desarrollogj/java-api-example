@@ -1,4 +1,4 @@
-# Java Example Api
+# Java Example Api - Domain driven approach
 
 An Api using Java 17, Spring and the following packages:
 
