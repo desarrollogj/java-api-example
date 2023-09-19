@@ -2,9 +2,11 @@ package com.desarrollogj.exampleapi.api.controller.v1.mapper;
 
 import com.desarrollogj.exampleapi.api.controller.v1.dto.UserResponse;
 import com.desarrollogj.exampleapi.api.controller.v1.dto.UserSaveRequest;
+import com.desarrollogj.exampleapi.api.controller.v1.dto.UserSearchResponse;
 import com.desarrollogj.exampleapi.api.controller.v1.dto.UserUpdateRequest;
 import com.desarrollogj.exampleapi.api.domain.user.User;
 import com.desarrollogj.exampleapi.api.domain.user.UserSaveInput;
+import com.desarrollogj.exampleapi.api.domain.user.UserSearchOutput;
 import com.desarrollogj.exampleapi.api.domain.user.UserUpdateInput;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -34,5 +36,9 @@ public class UserMapper {
     var mapped = this.modelMapper.map(user, UserUpdateInput.class);
     mapped.setId(id);
     return mapped;
+  }
+
+  public UserSearchResponse convertToResponseFromSearchOutput(UserSearchOutput output) {
+    return this.modelMapper.map(output, UserSearchResponse.class);
   }
 }

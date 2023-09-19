@@ -1,6 +1,9 @@
 package com.desarrollogj.exampleapi.commons.helper.web;
 
+import com.desarrollogj.exampleapi.commons.enums.ErrorCode;
 import com.desarrollogj.exampleapi.commons.helper.exception.*;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -37,7 +40,7 @@ public class ControllerErrorAdvice {
         var errorsStr = errors.keySet().stream()
                 .map(k -> k + ": " + errors.get(k))
                 .collect(Collectors.joining(", ", "", ""));
-        return error(HttpStatus.BAD_REQUEST, errorsStr);
+        return error(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR.name(), errorsStr);
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
@@ -50,7 +53,19 @@ public class ControllerErrorAdvice {
         var validationMessage = validationList.stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(", "));
-        return error(HttpStatus.BAD_REQUEST, validationMessage);
+        return error(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR.name(), validationMessage);
+    }
+
+    @ExceptionHandler({ConstraintViolationException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public final ResponseEntity<ErrorResponse> handleContraintViolationException(ConstraintViolationException ex) {
+        var validationList = ex.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath().toString() + ": " + v.getMessage())
+                .toList();
+        var validationMessage = validationList.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(", "));
+        return error(HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_ERROR.name(), validationMessage);
     }
 
     @ExceptionHandler({ResponseStatusException.class})
@@ -63,7 +78,7 @@ public class ControllerErrorAdvice {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public final ResponseEntity<ErrorResponse> handleAllExceptions(RuntimeException ex) {
         log.error(ex.getMessage(), ex);
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, ex);
+        return serverError(ErrorCode.FATAL_ERROR.name(), ex);
     }
 
     protected ResponseEntity<ErrorResponse> error(HttpStatus status, String message) {
@@ -81,5 +96,9 @@ public class ControllerErrorAdvice {
 
     protected ResponseEntity<ErrorResponse> error(HttpStatusCode status, String message) {
         return ResponseEntity.status(status).body(new ErrorResponse(status.value(), message));
+    }
+
+    protected ResponseEntity<ErrorResponse> serverError(String code, Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), code, e.getMessage()));
     }
 }

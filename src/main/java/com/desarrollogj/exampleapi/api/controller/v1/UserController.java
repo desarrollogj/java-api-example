@@ -2,8 +2,10 @@ package com.desarrollogj.exampleapi.api.controller.v1;
 
 import com.desarrollogj.exampleapi.api.controller.v1.dto.UserResponse;
 import com.desarrollogj.exampleapi.api.controller.v1.dto.UserSaveRequest;
+import com.desarrollogj.exampleapi.api.controller.v1.dto.UserSearchResponse;
 import com.desarrollogj.exampleapi.api.controller.v1.dto.UserUpdateRequest;
 import com.desarrollogj.exampleapi.api.controller.v1.mapper.UserMapper;
+import com.desarrollogj.exampleapi.api.domain.user.UserSearchInput;
 import com.desarrollogj.exampleapi.api.domain.validation.ErrorCode;
 import com.desarrollogj.exampleapi.api.service.UserService;
 import com.desarrollogj.exampleapi.commons.helper.exception.BadRequestException;
@@ -16,18 +18,41 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@Validated
 @RequiredArgsConstructor
 public class UserController {
     private final UserService service;
     private final UserMapper mapper;
+
+    @Operation(summary = "Search users")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Search results")
+    })
+    @GetMapping("/search")
+    public UserSearchResponse searchAll(@Parameter(description = "First name") @RequestParam(required = false) String firstName,
+                                        @Parameter(description = "Last name") @RequestParam(required = false) String lastName,
+                                        @Parameter(description = "Email address") @RequestParam(required = false) String email,
+                                        @Parameter(description = "Page number") @RequestParam(defaultValue = "1") @Min(1) int page,
+                                        @Parameter(description = "Page size") @RequestParam(defaultValue = "10") @Min(1) int size) {
+        var paging = UserSearchInput.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .pageNumber(page)
+                .pageSize(size)
+                .build();
+        return mapper.convertToResponseFromSearchOutput(service.searchAll(paging));
+    }
 
     /**
      * Return a list of users

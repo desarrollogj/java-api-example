@@ -2,16 +2,22 @@ package com.desarrollogj.exampleapi.api.service;
 
 import com.desarrollogj.exampleapi.api.domain.user.User;
 import com.desarrollogj.exampleapi.api.domain.user.UserSaveInput;
+import com.desarrollogj.exampleapi.api.domain.user.UserSearchInput;
 import com.desarrollogj.exampleapi.api.domain.user.UserUpdateInput;
 import com.desarrollogj.exampleapi.api.repository.UserRepository;
 import com.desarrollogj.exampleapi.api.service.impl.UserServiceImpl;
 import org.jeasy.random.EasyRandom;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +37,38 @@ public class UserServiceTest {
 
     @InjectMocks
     private UserServiceImpl service;
+
+    @Test
+    void whenSearchAll_AndActiveUsersExist_ThenReturnSearchResults() {
+        var userList = easyRandom.objects(User.class, 5).toList();
+        var pageOutput = new PageImpl<>(userList);
+
+        when(repository.findAll(ArgumentMatchers.any(), any(Pageable.class))).thenReturn(pageOutput);
+
+        var input = UserSearchInput.builder()
+                .pageNumber(1)
+                .pageSize(10)
+                .build();
+        var result = service.searchAll(input);
+
+        assertNotNull(result);
+        assertEquals(userList.size(), result.getTotal());
+        assertEquals(userList, result.getData());
+    }
+
+    @Test
+    void whenSearchAll_AndActiveUsersDoNotExist_ThenReturnEmptySearchResults() {
+        when(repository.findAll(ArgumentMatchers.any(), any(Pageable.class))).thenReturn(Page.empty());
+
+        var input = UserSearchInput.builder()
+                .pageNumber(1)
+                .pageSize(10)
+                .build();
+        var result = service.searchAll(input);
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotal());
+    }
 
     @Test
     void whenGetAll_AndActiveUsersExist_ThenReturnAListOfUsers() {
